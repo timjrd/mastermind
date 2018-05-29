@@ -1,0 +1,12 @@
+############# Editors
+*~
+\#*#
+.#*
+
+############# Builds
+*.hi
+*.o
+/src/Main
+
+/target
+/result
