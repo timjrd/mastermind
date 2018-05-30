@@ -5,7 +5,7 @@ import Util
 import Env
 
 import Combination
-import CombinationSet
+import CombinationSet as S
 
 candidate :: CombinationSet -> Env Combination
 candidate excluded = do
@@ -15,15 +15,21 @@ candidate excluded = do
     else return r
 
 candidates :: [Combination] -> Env [Combination]
-candidates = f . fromList
-  where f excluded = do
-          r  <- candidate excluded
-          rs <- f (insert r excluded)
-          return $ r:rs
+candidates excluded = f (length excluded) (S.fromList excluded)
+  where
+    f n excluded = do
+      card <- asks cardinality
+      r    <- candidate excluded
+      rs   <- f (n+1) (insert r excluded)
+      if n >= card
+        then return []
+        else return $ r:rs
+          
 
 candidatesOverlap :: [Combination] -> Env [Combination]
-candidatesOverlap = f . fromList
-  where f excluded = do
-          r  <- candidate excluded
-          rs <- f excluded
-          return $ r:rs
+candidatesOverlap = f . S.fromList
+  where
+    f excluded = do
+      r  <- candidate excluded
+      rs <- f excluded
+      return $ r:rs

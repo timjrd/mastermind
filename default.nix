@@ -28,7 +28,7 @@ in
       ];
       
       cleanPhase = ''
-        rm -f src/*.{hi,o} src/Main
+        rm -rf target
       '';
       
       postUnpack = ''(

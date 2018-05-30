@@ -1,21 +1,24 @@
 import Control.Monad
-import System.Random
+import System.Random (getStdGen)
 
 import Util
 import Env
+import Param
 
 import Combination
-import CombinationSet
+import qualified CombinationSet as S
 import Candidate
 import Secret
 import Hint
 
-param = Param { colors = 8
-              , holes  = 4
-              , hint   = stdHint }
+param = stdParam { colors = 10
+                 , holes  = 4 }
 
 main = do
   g  <- getStdGen
   print $ runEnv param g $ do
-    xs <- candidates []
-    forM (take 10 xs) toList
+    secret <- random
+    r      <- random
+    h      <- hint secret r
+    xs     <- secrets [(r,h)]
+    forM xs toList

@@ -1,5 +1,6 @@
 module Combination ( Combination
                    , random
+                   , fromList
                    , toList ) where
 
 import Internal (Combination(Combination))
@@ -9,19 +10,19 @@ import Env
 
 random :: Env Combination
 random = do
-  c <- colors <$> ask
-  h <- holes  <$> ask
-  r <- getRandomR (0, c^h - 1)
+  card <- asks cardinality
+  r    <- getRandomR (0, card-1)
   return $ Combination r
+
+fromList :: [Int] -> Env Combination
+fromList xs = do
+  pows <- asks powers
+  let muls = map (uncurry (*)) (zip pows xs)
+  return $ Combination $ foldl (+) 0 muls
 
 toList :: Combination -> Env [Int]
 toList (Combination x) = do
-  c <- colors <$> ask
-  h <- holes  <$> ask
-  let powers  = take h $ powersOf c
-      f power = ((x `div` power) `mod` c)
-  return $ map f powers
-
--- toListNaturalOrder x = do
---   list <- toList x
---   return $ reverse list
+  cols <- asks colors
+  pows <- asks powers
+  let f power = ((x `div` power) `mod` cols)
+  return $ map f pows
