@@ -2,6 +2,7 @@ module Secret ( secrets
               , secretsOverlap ) where
 
 import Control.Monad
+import Data.Maybe
 
 import Env
 
@@ -9,8 +10,10 @@ import Combination
 import CombinationSet
 import Hint
 
-isValid :: [(Combination,Hint)] -> Combination -> Env Bool
-isValid constraints secret = and <$> forM constraints f
+valid :: [(Combination,Hint)] -> Combination -> Env (Maybe Combination)
+valid constraints secret = do
+  v <- and <$> mapM f constraints
+  return $ if v then Just secret else Nothing
   where
     f (x,y) = (y==) <$> hint secret x
 
@@ -22,21 +25,20 @@ secrets = f 0 empty
       r    <- random
       let (n', excluded', r') =
             if r `member` excluded
-            then (n  , excluded         , [] )
-            else (n+1, insert r excluded, [r])
-      rs <- f n' excluded' constraints
+            then (n  , excluded         , Nothing)
+            else (n+1, insert r excluded, Just r )
+      r'' <- join <$> mapM (valid constraints) r'
+      rs  <- f n' excluded' constraints
       if n >= card
         then return []
-        else return $ r' ++ rs
+        else return $ maybeToList r'' ++ rs
 
 secretsOverlap :: [(Combination,Hint)] -> Env [Combination]
 secretsOverlap constraints = do
-  r     <- random
-  valid <- isValid constraints r
-  rs    <- secretsOverlap constraints
-  if valid
-    then return $ r:rs
-    else return rs
+  r  <- random
+  r' <- valid constraints r
+  rs <- secretsOverlap constraints
+  return $ maybeToList r' ++ rs
   
   
   
