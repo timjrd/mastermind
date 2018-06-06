@@ -1,25 +1,44 @@
-import System.Random (getStdGen)
+import System.Random (StdGen, getStdGen)
 
-import Util
-import Env
-import Param
+import Mastermind.Util
+import Mastermind.Env
 
-import Combination
-import qualified CombinationSet as S
-import Candidate
-import Secret
-import Hint
+import Mastermind.Combination
+import qualified Mastermind.Combination.Compact as C
+import qualified Mastermind.Combination.Set
+import qualified Mastermind.Combination.Set.Compact as S
+import Mastermind.Candidate
+import Mastermind.Secret
+import Mastermind.Hint
 
-param = stdParam { colors = 8
-                 , holes  = 4 }
+f :: ( Combination c
+     , Integral i
+     , ?combination :: c
+     , ?powers      :: [i]
+     , _ )
+  => Env [[Int]]
+f = do
+  let secret = fromList [1,2,3,4]
+      r      = fromList [1,2,4,3]
+      h      = ?hint secret r
+  xs <- genericSecrets [(r,h)] 
+  return $ map toList xs
 
+run :: StdGen -> [[Int]]
+run g =
+  let
+    ?colors = 8
+    ?holes  = 4
+    ?combination = C.compact
+    ?set         = S.compact
+  in let
+    ?cardinality = cardinality :: Int
+    ?powers      = powers :: [Int]
+  in let
+    ?hint = stdHint
+  in runEnv g f
+  
+main :: IO ()
 main = do
-  g  <- getStdGen
-  print $ runEnv param g $ do
-    secret <- random
-    r1     <- random
-    r2     <- random
-    h1     <- hint secret r1
-    h2     <- hint secret r2
-    xs     <- secrets [(r1,h1), (r2,h2)] 
-    mapM toList xs
+  g <- getStdGen
+  print $ run g

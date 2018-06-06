@@ -13,7 +13,16 @@ in
     haskellEnv = haskell.packages.ghc841.ghcWithPackages
       (haskellPackages: with haskellPackages; [
         MonadRandom
+        random-shuffle
       ]);
+    ghcFlags = [
+      "-XPartialTypeSignatures"
+      "-XScopedTypeVariables"
+      "-XImplicitParams"
+      "-XMultiParamTypeClasses"
+      
+      "-Wno-partial-type-signatures"
+    ];
     cmd = "mastermind";
     install = target: ''
       mkdir -p ${target}
@@ -38,8 +47,11 @@ in
       
       buildPhase = ''
         mkdir -p target/ghc
-        ghc -odir target/ghc -hidir target/ghc -isrc \
-            -O2 --make src/Main.hs -o target/ghc/Main
+
+        ghc -odir target/ghc -hidir target/ghc -isrc -O2 \
+            --make src/Main.hs -o target/ghc/Main \
+            ${builtins.concatStringsSep " " ghcFlags}
+
         ${install "target/bin"}
       '';
       
