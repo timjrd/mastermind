@@ -2,9 +2,10 @@ module Mastermind.Combination
   ( Combination
   , random
   , fromList
-  , toList ) where
+  , toList
+  , randomColor ) where
 
-import Mastermind.Env (Env)
+import Mastermind.Env
 
 class Combination c where
   random   :: ( Integral i
@@ -25,3 +26,7 @@ class Combination c where
               , ?holes       :: Int
               , ?powers      :: [i] )
            => c -> [Int]
+
+randomColor :: _ => Env Int
+randomColor = getRandomR (0, ?colors - 1)
+  

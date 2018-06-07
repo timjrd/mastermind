@@ -1,8 +1,8 @@
 import System.Random (StdGen, getStdGen)
+import Data.Maybe
 
 import Mastermind.Util
 import Mastermind.Env
-
 import Mastermind.Combination
 import qualified Mastermind.Combination.Compact as C
 import qualified Mastermind.Combination.Set
@@ -16,26 +16,27 @@ f :: ( Combination c
      , ?combination :: c
      , ?powers      :: [i]
      , _ )
-  => Env [[Int]]
+  => Env _
 f = do
-  let secret = fromList [1,2,3,4]
-      r      = fromList [1,2,4,3]
+  let secret = fromList $ 1:7:2: take (?holes-3) [0..]
+      r      = fromList $ 0:1:3: take (?holes-3) [0..]
       h      = ?hint secret r
-  xs <- genericSecrets [(r,h)] 
+  xs <- secrets [(r,h)]
   return $ map toList xs
 
-run :: StdGen -> [[Int]]
+run :: StdGen -> _
 run g =
   let
-    ?colors = 8
-    ?holes  = 4
+    ?colors = 9
+    ?holes  = 9
     ?combination = C.compact
     ?set         = S.compact
   in let
     ?cardinality = cardinality :: Int
     ?powers      = powers :: [Int]
   in let
-    ?hint = stdHint
+    ?hint   = stdHint
+    ?secret = stdSecret
   in runEnv g f
   
 main :: IO ()

@@ -23,8 +23,7 @@ candidates excluded = f (length excluded) (fromList excluded)
         else do
           r  <- candidate excluded
           rs <- f (n+1) (insert r excluded)        
-          return $ r:rs
-          
+          return $ r:rs          
 
 candidatesOverlap :: _ => Combination c => [c] -> Env [c]
 candidatesOverlap excluded = f (fromList excluded)
