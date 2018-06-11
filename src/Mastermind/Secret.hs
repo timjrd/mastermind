@@ -75,11 +75,10 @@ stdSecret x y = do
           else return r
 
   let mNotBadsWrongs2 = do
-        notWrongs2 <- mapM (\_ -> notWrong) badsWrongs2
-        mv <- shuffleDistinct bads2 notWrongs2
-        case mv of
-          Nothing -> mNotBadsWrongs2
-          Just v  -> return v
+        xs <- mapM (\_ -> notWrong) badsWrongs2
+        if distinct bads2 xs
+          then return xs
+          else mNotBadsWrongs2
 
   notBadsWrongs2 <- mNotBadsWrongs2
   
@@ -88,15 +87,11 @@ stdSecret x y = do
 
   return $ fromList result
   
-
-shuffleDistinct :: (Eq a, Show a) => [a] -> [a] -> Env (Maybe [a])
-shuffleDistinct refs xs = do
+distinct :: (Eq a) => [a] -> [a] -> Bool
+distinct refs xs =
   let refs' = map Just refs ++ repeat Nothing
       xs'   = map Just xs
-  shuffled <- shuffleM xs'
-  if or $ map (uncurry (==)) $ zip refs' shuffled
-    then return Nothing
-    else return $ Just $ map fromJust shuffled
+  in not $ or $ map (uncurry (==)) $ zip refs' xs'
 
 genericSecrets :: _ => Combination c => [(c,Hint)] -> Env [c]
 genericSecrets constraints = f 0 empty constraints

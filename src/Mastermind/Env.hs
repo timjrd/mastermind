@@ -1,9 +1,4 @@
-module Mastermind.Env
-  ( Env
-  , runEnv
-  , cardinality
-  , powers
-  , getRandomR ) where
+module Mastermind.Env where
 
 import Control.Monad.Random
 

@@ -6,3 +6,7 @@ powersOf a = f 1
 
 both :: (a -> b) -> (a,a) -> (b,b)
 both f (x,y) = (f x, f y)
+
+boolToMaybe :: Bool -> Maybe ()
+boolToMaybe True  = Just ()
+boolToMaybe False = Nothing

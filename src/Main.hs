@@ -1,5 +1,6 @@
 import System.Random (StdGen, getStdGen)
 import Data.Maybe
+import Control.Monad
 
 import Mastermind.Util
 import Mastermind.Env
@@ -10,6 +11,7 @@ import qualified Mastermind.Combination.Set.Compact as S
 import Mastermind.Candidate
 import Mastermind.Secret
 import Mastermind.Hint
+import Mastermind.Permutation
 
 f :: ( Combination c
      , Integral i
@@ -18,10 +20,14 @@ f :: ( Combination c
      , _ )
   => Env _
 f = do
-  let secret = fromList $ 1:7:2: take (?holes-3) [0..]
-      r      = fromList $ 0:1:3: take (?holes-3) [0..]
-      h      = ?hint secret r
-  xs <- secrets [(r,h)]
+  secret <- random
+
+  cs <- replicateM 3 $ do
+    r <- random
+    let h = ?hint secret r
+    return (r,h)
+
+  xs <- take 100 <$> secrets cs
   return $ map toList xs
 
 run :: StdGen -> _

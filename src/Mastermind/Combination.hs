@@ -1,9 +1,6 @@
-module Mastermind.Combination
-  ( Combination
-  , random
-  , fromList
-  , toList
-  , randomColor ) where
+module Mastermind.Combination where
+
+import Control.Monad.Random
 
 import Mastermind.Env
 

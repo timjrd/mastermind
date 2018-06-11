@@ -1,9 +1,8 @@
 module Mastermind.Combination.Compact
-  ( Compact
-  , random
-  , fromList
-  , toList
-  , compact ) where
+  ( module Mastermind.Combination.Compact
+  , Compact ) where
+
+import Control.Monad.Random
 
 import Mastermind.Env
 import Mastermind.Combination
