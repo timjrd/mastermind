@@ -14,6 +14,7 @@ in
       (haskellPackages: with haskellPackages; [
         MonadRandom
         random-shuffle
+        split
       ]);
     ghcFlags = [
       "-XPartialTypeSignatures"

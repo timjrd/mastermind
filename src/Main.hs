@@ -28,7 +28,7 @@ f = do
   secret <- random
   --let secret = fromList [0,1,1,1]
 
-  cs <- replicateM 7 $ do
+  cs <- replicateM 10 $ do
     r <- random
     --let r = fromList [1,1,1,0]
     let h = ?hint secret r
@@ -41,7 +41,7 @@ f = do
 run :: StdGen -> _
 run g =
   let
-    ?colors = 2
+    ?colors = 8
     ?holes  = 4
     ?combination = C.compact
     ?set         = S.compact
@@ -56,4 +56,4 @@ run g =
 main :: IO ()
 main = do
   g <- getStdGen
-  print $ run g
+  mapM_ print $ run g

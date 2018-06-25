@@ -26,9 +26,11 @@ boolToMaybe :: Bool -> Maybe ()
 boolToMaybe True  = Just ()
 boolToMaybe False = Nothing
 
-enumerate :: [[a]] -> [[a]]
-enumerate []     = [[]]
-enumerate (x:xs) = concat $ map f x
-  where f y = map (y:) (enumerate xs)
+-- enumerate :: [[a]] -> [[a]]
+-- enumerate []     = [[]]
+-- enumerate (x:xs) = concat $ map f x
+--   where f y = map (y:) (enumerate xs)
+
+
 
 debug msg x = trace (msg ++ ": " ++ show x) x
