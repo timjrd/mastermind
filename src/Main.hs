@@ -28,21 +28,19 @@ f = do
   secret <- random
   --let secret = fromList [0,1,1,1]
 
-  cs <- replicateM 10 $ do
+  cs <- replicateM 15 $ do
     r <- random
     --let r = fromList [1,1,1,0]
     let h = ?hint secret r
     return (r,h)
 
-  --xs <- take 100 <$> secrets cs
-  --return $ map toList xs
-  permutations cs
+  map (map $ concatMap show) <$> permutations cs
 
 run :: StdGen -> _
 run g =
   let
-    ?colors = 8
-    ?holes  = 4
+    ?colors = 9
+    ?holes  = 9
     ?combination = C.compact
     ?set         = S.compact
   in let

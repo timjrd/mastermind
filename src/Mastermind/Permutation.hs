@@ -7,7 +7,7 @@ import Control.Category ((>>>))
 import Data.Maybe
 import Data.List hiding (insert)
 import Data.List.Split
-import Data.Map (Map, empty, insert, (!?))
+import qualified Data.IntMap as M
 import Control.Monad.Random hiding (next)
 import System.Random.Shuffle
 
@@ -22,6 +22,9 @@ type Color = Int
 
 data Tag = G | B | W
   deriving (Eq,Show)
+
+-- Color -> Index -> Tag
+type TagMap = M.IntMap (M.IntMap Tag)
 
 type Permutation = [Tag]
 
@@ -67,24 +70,45 @@ concat2Trees a b = map f a
     f (Node tag children) = Node tag $ concat2Trees children b  
 
 prune :: _ => [Color] -> [Node] -> [Node]
-prune colors nodes = prune' 0 colors empty nodes
+prune colors nodes = prune' 0 colors M.empty nodes
 
-prune' :: _ => Int -> [Color] -> Map (Index,Color) Tag -> [Node] -> [Node]
+prune' :: _ => Int -> [Color] -> TagMap -> [Node] -> [Node]
 prune' _ [] _ _ = []
 prune' index (color:colors) mp nodes = catMaybes $ map f nodes
   where
     f (Node tag children) =
       let
-        isValid   = case mp !? (index,color) of
-          (Just tag') -> tag' == tag
-          Nothing     -> True        
+        sameColorIsValid = case tag of
+          G -> sameColorIsGB
+          B -> sameColorIsGB
+          W -> sameColorIsW
+        sameColorIndexTag = maybe True (==tag) $ ofColorIndex mp color index
+        isValid = sameColorIsValid && sameColorIndexTag
+          
         index'    = (index+1) `mod` ?holes
-        mp'       = insert (index,color) tag mp
+        mp'       = insertTag mp color index tag
         children' = prune' index' colors mp' children        
       in
         if isValid
         then Just $ Node tag children'
         else Nothing
+
+    sameColorIsGB = mp `ofColor` color
+                    & map (\x -> x == G || x == B)
+                    & and
+
+    sameColorIsW  = mp `ofColor` color
+                    & map (==W)
+                    & and
+
+ofColor :: TagMap -> Color -> [Tag]
+ofColor mp color = maybe [] M.elems $ M.lookup color mp
+
+ofColorIndex :: TagMap -> Color -> Index -> Maybe Tag
+ofColorIndex mp color index = M.lookup color mp >>= M.lookup index
+
+insertTag :: TagMap -> Color -> Index -> Tag -> TagMap
+insertTag mp color index tag = M.insertWith M.union color (M.singleton index tag) mp
 
 enumerate :: _ => Int -> [Node] -> [[Permutation]]
 enumerate nbConstraints nodes =
