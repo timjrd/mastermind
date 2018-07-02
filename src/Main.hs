@@ -39,8 +39,8 @@ f = do
 run :: StdGen -> _
 run g =
   let
-    ?colors = 9
-    ?holes  = 9
+    ?colors = 8
+    ?holes  = 4
     ?combination = C.compact
     ?set         = S.compact
   in let

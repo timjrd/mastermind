@@ -20,7 +20,7 @@ type Index = Int
 
 type Color = Int
 
-data Tag = G | B | W
+data Tag = G | B | M | W
   deriving (Eq,Show)
 
 -- Color -> Index -> Tag
@@ -43,14 +43,15 @@ permutations constraints = do
   let (is,xs) = unzip shuffled
       (cs,hs) = unzip xs
       colors  = concatMap toList cs
-  trees <- mapM (tree . mkTags) hs
-  return $
-    concatTrees trees
-    & prune colors
-    & enumerate (length constraints)
-    & map ( zip is
-            >>> sortOn fst
-            >>> map snd )
+  mapM (tree . mkTags) hs
+    <&> concatTrees
+    <&> prune colors
+    <&> addM & join
+    <&> pruneM colors
+    <&> enumerate (length constraints)
+    <&> map ( zip is
+              >>> sortOn fst
+              >>> map snd )
 
 tree :: [Tag] -> Env [Node]
 tree tags = interleave $
@@ -77,29 +78,21 @@ prune' _ [] _ _ = []
 prune' index (color:colors) mp nodes = catMaybes $ map f nodes
   where
     f (Node tag children) =
-      let
-        sameColorIsValid = case tag of
-          G -> sameColorIsGB
-          B -> sameColorIsGB
-          W -> sameColorIsW
-        sameColorIndexTag = maybe True (==tag) $ ofColorIndex mp color index
-        isValid = sameColorIsValid && sameColorIndexTag
-          
+      if not valid
+      then Nothing
+      else Just $ Node tag children'
+      where
         index'    = (index+1) `mod` ?holes
         mp'       = insertTag mp color index tag
         children' = prune' index' colors mp' children        
-      in
-        if isValid
-        then Just $ Node tag children'
-        else Nothing
 
-    sameColorIsGB = mp `ofColor` color
-                    & map (\x -> x == G || x == B)
-                    & and
-
-    sameColorIsW  = mp `ofColor` color
-                    & map (==W)
-                    & and
+        valid = case tag of
+          G -> sameColorIs (\x -> x==G||x==B) && sameColorIndexIs (==G)
+          B -> sameColorIs (\x -> x==G||x==B) && sameColorIndexIs (==B)
+          W -> sameColorIs (==W)
+        
+        sameColorIs p = and $ map p $ mp `ofColor` color
+        sameColorIndexIs p = maybe True p $ ofColorIndex mp color index                    
 
 ofColor :: TagMap -> Color -> [Tag]
 ofColor mp color = maybe [] M.elems $ M.lookup color mp
@@ -109,6 +102,51 @@ ofColorIndex mp color index = M.lookup color mp >>= M.lookup index
 
 insertTag :: TagMap -> Color -> Index -> Tag -> TagMap
 insertTag mp color index tag = M.insertWith M.union color (M.singleton index tag) mp
+
+addM :: [Node] -> Env [Node]
+addM nodes = interleave $ do
+  withM <- mapM f nodes
+  shuffleM $ concat withM
+  where
+    f (Node tag children) = do
+      children' <- addM children
+      let node  = Node tag children'
+          mNode = if tag == B
+                  then [Node M children']
+                  else []
+      return $ node:mNode
+
+pruneM :: _ => [Color] -> [Node] -> [Node]
+pruneM colors nodes = pruneM' ?holes colors [] [] [] nodes
+
+pruneM' :: _ => Int -> [Color] -> [Color] -> [Color] -> [Color] -> [Node] -> [Node]
+pruneM' 0 colors _  _  _  nodes = pruneM colors nodes
+pruneM' n colors gs bs ms nodes = catMaybes $ map (pruneM'' n colors gs bs ms) nodes
+
+pruneM'' :: _ => Int -> [Color] -> [Color] -> [Color] -> [Color] -> Node -> Maybe Node
+pruneM'' n (color:colors) gs bs ms (Node tag children) =
+  if not valid
+  then Nothing
+  else Just $ Node tag $ pruneM' (n-1) colors gs' bs' ms' children
+  where
+    (gs', bs', ms') = case tag of
+      G -> (color:gs,       bs,       ms)
+      B -> (      gs, color:bs,       ms)
+      M -> (      gs,       bs, color:ms)
+      W -> (      gs,       bs,       ms)
+      
+    validNode = case tag of
+      G -> color `notElem` bs
+      B -> color `notElem` bs && color `notElem` gs
+      M -> True
+      W -> True
+      
+    isNode = n > 1
+    
+    validLeaf = and $ map v ms'
+    v m = m `elem` gs' || m `elem` bs'
+                
+    valid = validNode && (isNode || validLeaf)
 
 enumerate :: _ => Int -> [Node] -> [[Permutation]]
 enumerate nbConstraints nodes =
