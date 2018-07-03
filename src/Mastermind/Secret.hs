@@ -1,15 +1,14 @@
 module Mastermind.Secret
   ( genericSecrets
-  , genericSecretsOverlap
-  , secrets
-  , stdSecret
-  , valid ) where
+  , genericSecretsOverlap ) where
 
 import Data.Function ((&))
 import Control.Monad
 import Data.Maybe
 import Data.List (sortOn, partition)
+import Data.Tree
 import System.Random.Shuffle
+import Control.Monad.Random (interleave)
 import qualified Data.IntSet as S
 
 import Mastermind.Util
@@ -17,82 +16,60 @@ import Mastermind.Env
 import Mastermind.Combination
 import Mastermind.Combination.Set (Set, empty, member, insert)
 import Mastermind.Hint
+import Mastermind.Permutation
 
-secrets :: _ => Combination c => [(c,Hint)] -> Env [c]
-secrets constraints = do
-  (x,n0) <- fromJust <$> secret constraints empty maxBound
-  xs <- f (x `insert` empty) (n0*16)
-  return $ x:xs
-  where
-    f excluded n = do
-      mx <- secret constraints excluded (n*8)
-      case mx of
-        Nothing       -> return []
-        (Just (x,n')) -> do
-          xs <- f (x `insert` excluded) (max n n')
-          return $ x:xs
+type Color = Int
 
-secret :: _ => Set s c => [(c,Hint)] -> s -> Int -> Env (Maybe (c,Int))
-secret constraints excluded trials = g 1
+data Constraints = Constraints
+                   [Maybe Color] -- positive color  at each index
+                   [S.IntSet]    -- negative colors at each index
+                   S.IntSet      -- required colors
+
+instance Semigroup Constraints where
+  (Constraints a b c) <> (Constraints a' b' c') = Constraints
+    (zip a a' & map (uncurry eitherJust))
+    (zip b b' & map (uncurry S.union))
+    (S.union c c')
+    where
+      eitherJust Nothing Nothing = Nothing      
+      eitherJust Nothing x       = x
+      eitherJust x       Nothing = x
+
+emptyConstraints :: _ => Constraints
+emptyConstraints = Constraints
+  (replicate ?holes Nothing)
+  (replicate ?holes S.empty)
+  S.empty
+
+toConstraints :: _ => [[(Color,HintTag)]] -> Constraints
+toConstraints ps = foldl (<>) emptyConstraints $ map f ps
   where
-    g n =
-      if n > trials
+    f p = Constraints a (map (uncurry S.union) $ zip b $ repeat b') c
+      where (a,b,c,b') = foldl g ([], [], S.empty, S.empty) p
+
+    g (a,b,c,b') (color,tag) = case tag of
+      G -> (Just color : a,           S.empty : b, S.insert color c, b')
+      B -> (   Nothing : a, S.singleton color : b, S.insert color c, b')
+      W -> (   Nothing : a,           S.empty : b,                c, S.insert color b')
+
+tree :: _ => Constraints -> Env (Forest Color)
+tree (Constraints []     []     _) = return []
+tree (Constraints (a:as) (b:bs) c) = interleave $
+  catMaybes <$> mapM node colors >>= shuffleM
+  where
+    colors = case a of
+      Just color -> [color]
+      Nothing    -> S.toList $ ?allColors S.\\ b
+    
+    node color = if not valid
       then return Nothing
-      else do
-        xs <- mapM (uncurry ?secret) constraints
-        let result = map (valid constraints) xs
-                     & filter isJust
-                     & map fromJust
-                     & listToMaybe
-        case result of
-          Nothing  -> g $ n+1
-          (Just x) -> if x `member` excluded
-                      then g $ n+1
-                      else return $ Just (x,n)
-
-
-stdSecret :: ( Combination c
-             , Integral i
-             , ?powers :: [i]
-             , _ )
-          => c -> Hint -> Env c
-stdSecret x y = do
-  let x' = toList x
-  
-  shuffled <- shuffleM (zip [0..] x')
-  
-  let (goods,badsWrongs) = splitAt (good y) shuffled
-      (bads,wrongs)      = splitAt (bad  y) badsWrongs
-      (badsWrongs1,badsWrongs2) = unzip badsWrongs
-      bads2    = map snd bads
-      wrongs2  = map snd wrongs
-      wrongSet = S.fromList wrongs2
-      
-  let notWrong = do
-        r <- randomColor
-        if r `S.member` wrongSet
-          then notWrong
-          else return r
-
-  let mNotBadsWrongs2 = do
-        xs <- mapM (\_ -> notWrong) badsWrongs2
-        if distinct bads2 xs
-          then return xs
-          else mNotBadsWrongs2
-
-  notBadsWrongs2 <- mNotBadsWrongs2
-  
-  let notBadsWrongs = zip badsWrongs1 notBadsWrongs2
-      result = map snd $ sortOn fst $ goods ++ notBadsWrongs
-
-  return $ fromList result
-  
-distinct :: (Eq a) => [a] -> [a] -> Bool
-distinct refs xs =
-  let refs' = map Just refs ++ repeat Nothing
-      xs'   = map Just xs
-  in not $ or $ map (uncurry (==)) $ zip refs' xs'
-
+      else Just . Node color <$> children
+      where
+        children = tree $ Constraints as bs c'
+        c'       = S.delete color c
+        valid    = (not leaf) || S.null c'        
+        leaf     = null as
+          
 genericSecrets :: _ => Combination c => [(c,Hint)] -> Env [c]
 genericSecrets constraints = f 0 empty constraints
   where

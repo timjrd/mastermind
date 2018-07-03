@@ -1,14 +1,18 @@
-module Mastermind.Permutation where
+module Mastermind.Permutation
+  ( hintPermutations
+  , HintTag(G,B,W)
+  , HintPermutation ) where
 
 import Debug.Trace
 
 import Data.Function ((&))
 import Control.Category ((>>>))
 import Data.Maybe
+import Data.Tree
 import Data.List hiding (insert)
 import Data.List.Split
 import qualified Data.IntMap as M
-import Control.Monad.Random hiding (next)
+import Control.Monad.Random (interleave)
 import System.Random.Shuffle
 
 import Mastermind.Util
@@ -17,28 +21,22 @@ import Mastermind.Combination
 import Mastermind.Hint
 
 type Index = Int
-
 type Color = Int
 
-data Tag = G | B | M | W
+data HintTag = G | B | W
   deriving (Eq,Show)
 
 -- Color -> Index -> Tag
-type TagMap = M.IntMap (M.IntMap Tag)
+type TagMap = M.IntMap (M.IntMap HintTag)
 
-type Permutation = [Tag]
+type HintPermutation = [HintTag]
 
-data Node = Node Tag [Node]
-
-instance Show Node where
-  show (Node tag _) = show tag
-
-permutations :: ( Integral i
-                , Combination c
-                , (?powers :: [i])
-                , _ )
-             => [(c,Hint)] -> Env [[Permutation]]
-permutations constraints = do
+hintPermutations :: ( Integral i
+                    , Combination c
+                    , (?powers :: [i])
+                    , _ )
+                 => [(c,Hint)] -> Env [[HintPermutation]]
+hintPermutations constraints = do
   shuffled <- shuffleM $ zip [0..] constraints
   let (is,xs) = unzip shuffled
       (cs,hs) = unzip xs
@@ -46,14 +44,14 @@ permutations constraints = do
   mapM (tree . mkTags) hs
     <&> concatTrees
     <&> prune colors
-    <&> addM & join
-    <&> pruneM colors
+    -- <&> addM & join
+    -- <&> pruneM colors
     <&> enumerate (length constraints)
     <&> map ( zip is
               >>> sortOn fst
               >>> map snd )
 
-tree :: [Tag] -> Env [Node]
+tree :: [HintTag] -> Env (Forest HintTag)
 tree tags = interleave $
   mapM f (nub tags) >>= shuffleM
   where
@@ -61,19 +59,19 @@ tree tags = interleave $
       children <- tree $ delete tag tags
       return $ Node tag children
 
-concatTrees :: [[Node]] -> [Node]
+concatTrees :: [Forest HintTag] -> Forest HintTag
 concatTrees = foldr concat2Trees []
 
-concat2Trees :: [Node] -> [Node] -> [Node]
+concat2Trees :: Forest HintTag -> Forest HintTag -> Forest HintTag
 concat2Trees a b = map f a
   where
     f (Node tag []      ) = Node tag b
     f (Node tag children) = Node tag $ concat2Trees children b  
 
-prune :: _ => [Color] -> [Node] -> [Node]
+prune :: _ => [Color] -> Forest HintTag -> Forest HintTag
 prune colors nodes = prune' 0 colors M.empty nodes
 
-prune' :: _ => Int -> [Color] -> TagMap -> [Node] -> [Node]
+prune' :: _ => Int -> [Color] -> TagMap -> Forest HintTag -> Forest HintTag
 prune' _ [] _ _ = []
 prune' index (color:colors) mp nodes = catMaybes $ map f nodes
   where
@@ -94,68 +92,63 @@ prune' index (color:colors) mp nodes = catMaybes $ map f nodes
         sameColorIs p = and $ map p $ mp `ofColor` color
         sameColorIndexIs p = maybe True p $ ofColorIndex mp color index                    
 
-ofColor :: TagMap -> Color -> [Tag]
+ofColor :: TagMap -> Color -> [HintTag]
 ofColor mp color = maybe [] M.elems $ M.lookup color mp
 
-ofColorIndex :: TagMap -> Color -> Index -> Maybe Tag
+ofColorIndex :: TagMap -> Color -> Index -> Maybe HintTag
 ofColorIndex mp color index = M.lookup color mp >>= M.lookup index
 
-insertTag :: TagMap -> Color -> Index -> Tag -> TagMap
+insertTag :: TagMap -> Color -> Index -> HintTag -> TagMap
 insertTag mp color index tag = M.insertWith M.union color (M.singleton index tag) mp
 
-addM :: [Node] -> Env [Node]
-addM nodes = interleave $ do
-  withM <- mapM f nodes
-  shuffleM $ concat withM
-  where
-    f (Node tag children) = do
-      children' <- addM children
-      let node  = Node tag children'
-          mNode = if tag == B
-                  then [Node M children']
-                  else []
-      return $ node:mNode
+-- addM :: [Node] -> Env [Node]
+-- addM nodes = interleave $ do
+--   withM <- mapM f nodes
+--   shuffleM $ concat withM
+--   where
+--     f (Node tag children) = do
+--       children' <- addM children
+--       let node  = Node tag children'
+--           mNode = if tag == B
+--                   then [Node M children']
+--                   else []
+--       return $ node:mNode
 
-pruneM :: _ => [Color] -> [Node] -> [Node]
-pruneM colors nodes = pruneM' ?holes colors [] [] [] nodes
+-- pruneM :: _ => [Color] -> [Node] -> [Node]
+-- pruneM colors nodes = pruneM' ?holes colors [] [] [] nodes
 
-pruneM' :: _ => Int -> [Color] -> [Color] -> [Color] -> [Color] -> [Node] -> [Node]
-pruneM' 0 colors _  _  _  nodes = pruneM colors nodes
-pruneM' n colors gs bs ms nodes = catMaybes $ map (pruneM'' n colors gs bs ms) nodes
+-- pruneM' :: _ => Int -> [Color] -> [Color] -> [Color] -> [Color] -> [Node] -> [Node]
+-- pruneM' 0 colors _  _  _  nodes = pruneM colors nodes
+-- pruneM' n colors gs bs ms nodes = catMaybes $ map (pruneM'' n colors gs bs ms) nodes
 
-pruneM'' :: _ => Int -> [Color] -> [Color] -> [Color] -> [Color] -> Node -> Maybe Node
-pruneM'' n (color:colors) gs bs ms (Node tag children) =
-  if not valid
-  then Nothing
-  else Just $ Node tag $ pruneM' (n-1) colors gs' bs' ms' children
-  where
-    (gs', bs', ms') = case tag of
-      G -> (color:gs,       bs,       ms)
-      B -> (      gs, color:bs,       ms)
-      M -> (      gs,       bs, color:ms)
-      W -> (      gs,       bs,       ms)
+-- pruneM'' :: _ => Int -> [Color] -> [Color] -> [Color] -> [Color] -> Node -> Maybe Node
+-- pruneM'' n (color:colors) gs bs ms (Node tag children) =
+--   if not valid
+--   then Nothing
+--   else Just $ Node tag $ pruneM' (n-1) colors gs' bs' ms' children
+--   where
+--     (gs', bs', ms') = case tag of
+--       G -> (color:gs,       bs,       ms)
+--       B -> (      gs, color:bs,       ms)
+--       M -> (      gs,       bs, color:ms)
+--       W -> (      gs,       bs,       ms)
       
-    validNode = case tag of
-      G -> color `notElem` bs
-      B -> color `notElem` bs && color `notElem` gs
-      M -> True
-      W -> True
+--     validNode = case tag of
+--       G -> color `notElem` bs
+--       B -> color `notElem` bs && color `notElem` gs
+--       M -> True
+--       W -> True
       
-    isNode = n > 1
+--     isNode = n > 1
     
-    validLeaf = and $ map v ms'
-    v m = m `elem` gs' || m `elem` bs'
+--     validLeaf = and $ map v ms'
+--     v m = m `elem` gs' || m `elem` bs'
                 
-    valid = validNode && (isNode || validLeaf)
+--     valid = validNode && (isNode || validLeaf)
 
-enumerate :: _ => Int -> [Node] -> [[Permutation]]
+enumerate :: _ => Int -> Forest HintTag -> [[HintPermutation]]
 enumerate nbConstraints nodes =
-  map (chunksOf ?holes) $ concatMap (f $ nbConstraints * ?holes) nodes
-  where
-    f 1 (Node tag []) = [[tag]]
-    f _ (Node _   []) = []
-    f n (Node tag children) = map (tag:) $
-      concatMap (f $ n-1) children
+  map (chunksOf ?holes) $ enumerateTree (nbConstraints * ?holes) nodes
 
 -- enumerate :: _ => Int -> [Node] -> [[Permutation]]
 -- enumerate _ [] = []
@@ -181,7 +174,7 @@ enumerate nbConstraints nodes =
 --                        then siblings
 --                        else Node tag children' : siblings
 
-mkTags :: _ => Hint -> [Tag]
+mkTags :: _ => Hint -> [HintTag]
 mkTags x = replicate (good x) G
            ++ replicate (bad x) B
            ++ replicate (?holes - good x - bad x) W

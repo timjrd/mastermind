@@ -1,5 +1,7 @@
 module Mastermind.Util where
 
+import Data.Tree
+
 import Debug.Trace
 
 powersOf :: Num n => n -> [n]
@@ -35,6 +37,13 @@ boolToMaybe False = Nothing
 -- enumerate (x:xs) = concat $ map f x
 --   where f y = map (y:) (enumerate xs)
 
-
+enumerateTree :: Int -> Forest a -> [[a]]
+enumerateTree n nodes =
+  concatMap (f n) nodes
+  where
+    f 1 (Node tag []) = [[tag]]
+    f _ (Node _   []) = []
+    f n (Node tag children) = map (tag:) $
+      concatMap (f $ n-1) children
 
 debug msg x = trace (msg ++ ": " ++ show x) x

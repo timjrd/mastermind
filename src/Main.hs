@@ -1,6 +1,7 @@
 import System.Random (StdGen, getStdGen)
 import Data.Maybe
 import Control.Monad
+import qualified Data.IntSet as IS
 
 import Mastermind.Util
 import Mastermind.Env
@@ -34,21 +35,21 @@ f = do
     let h = ?hint secret r
     return (r,h)
 
-  map (map $ concatMap show) <$> permutations cs
+  map (map $ concatMap show) <$> hintPermutations cs
 
 run :: StdGen -> _
 run g =
   let
-    ?colors = 8
-    ?holes  = 4
+    ?colors = 9
+    ?holes  = 9
     ?combination = C.compact
     ?set         = S.compact
   in let
     ?cardinality = cardinality :: Int
     ?powers      = powers :: [Int]
+    ?allColors   = IS.fromList [0..(?colors-1)]
   in let
-    ?hint   = stdHint
-    ?secret = stdSecret
+    ?hint = stdHint
   in runEnv g f
   
 main :: IO ()
