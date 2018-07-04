@@ -41,9 +41,9 @@ enumerateTree :: Int -> Forest a -> [[a]]
 enumerateTree n nodes =
   concatMap (f n) nodes
   where
-    f 1 (Node tag []) = [[tag]]
-    f _ (Node _   []) = []
-    f n (Node tag children) = map (tag:) $
+    f 1 (Node label []) = [[label]]
+    f _ (Node _     []) = []
+    f n (Node label children) = map (label:) $
       concatMap (f $ n-1) children
 
 debug msg x = trace (msg ++ ": " ++ show x) x

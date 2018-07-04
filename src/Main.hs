@@ -35,7 +35,8 @@ f = do
     let h = ?hint secret r
     return (r,h)
 
-  map (map $ concatMap show) <$> hintPermutations cs
+  --map (map $ concatMap show) <$> hintPermutations cs
+  map toList <$> secrets cs
 
 run :: StdGen -> _
 run g =

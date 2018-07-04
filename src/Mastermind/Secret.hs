@@ -1,5 +1,6 @@
 module Mastermind.Secret
-  ( genericSecrets
+  ( secrets
+  , genericSecrets
   , genericSecretsOverlap ) where
 
 import Data.Function ((&))
@@ -34,6 +35,27 @@ instance Semigroup Constraints where
       eitherJust Nothing Nothing = Nothing      
       eitherJust Nothing x       = x
       eitherJust x       Nothing = x
+      eitherJust x       _       = x
+
+secrets :: ( Combination c
+           , Integral i
+           , ?powers :: [i]
+           , _ )
+        => [(c,Hint)] -> Env [c]
+secrets constraints =
+  hintPermutations constraints
+  >>= mapM (toSecrets colors)
+  <&> concat
+  where colors = unzip constraints & fst & map toList
+
+toSecrets :: _ => Combination c => [[Color]] -> [HintPermutation] -> Env [c]
+toSecrets colors tags =
+  zip colors tags
+  & map (uncurry zip)
+  & toConstraints
+  & tree
+  <&> enumerateTree ?holes
+  <&> map fromList
 
 emptyConstraints :: _ => Constraints
 emptyConstraints = Constraints
@@ -53,8 +75,11 @@ toConstraints ps = foldl (<>) emptyConstraints $ map f ps
       W -> (   Nothing : a,           S.empty : b,                c, S.insert color b')
 
 tree :: _ => Constraints -> Env (Forest Color)
-tree (Constraints []     []     _) = return []
-tree (Constraints (a:as) (b:bs) c) = interleave $
+tree ct@(Constraints _ _ c) = tree' ?holes (S.size c) ct
+
+tree' :: _ => Int -> Int -> Constraints -> Env (Forest Color)
+tree' _ _    (Constraints []     []     _) = return []
+tree' n left (Constraints (a:as) (b:bs) c) = interleave $
   catMaybes <$> mapM node colors >>= shuffleM
   where
     colors = case a of
@@ -65,10 +90,12 @@ tree (Constraints (a:as) (b:bs) c) = interleave $
       then return Nothing
       else Just . Node color <$> children
       where
-        children = tree $ Constraints as bs c'
-        c'       = S.delete color c
-        valid    = (not leaf) || S.null c'        
-        leaf     = null as
+        children = tree' n' left' $ Constraints as bs c'
+        n' = n-1
+        (left',c') = if S.member color c
+                     then (left-1, S.delete color c)
+                     else (left, c)
+        valid = left' <= n'
           
 genericSecrets :: _ => Combination c => [(c,Hint)] -> Env [c]
 genericSecrets constraints = f 0 empty constraints
