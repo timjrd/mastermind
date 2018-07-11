@@ -69,11 +69,11 @@ concat2Trees a b = map f a
     f (Node tag children) = Node tag $ concat2Trees children b  
 
 prune :: _ => [Color] -> Forest HintTag -> Forest HintTag
-prune colors nodes = prune' 0 colors M.empty nodes
+prune colors nodes = prune' 0 colors M.empty M.empty nodes
 
-prune' :: _ => Int -> [Color] -> TagMap -> Forest HintTag -> Forest HintTag
-prune' _ [] _ _ = []
-prune' index (color:colors) mp nodes = catMaybes $ map f nodes
+prune' :: _ => Int -> [Color] -> TagMap -> M.IntMap Color -> Forest HintTag -> Forest HintTag
+prune' _ [] _ _ _ = []
+prune' index (color:colors) mp goods nodes = catMaybes $ map f nodes
   where
     f (Node tag children) =
       if not valid
@@ -82,15 +82,19 @@ prune' index (color:colors) mp nodes = catMaybes $ map f nodes
       where
         index'    = (index+1) `mod` ?holes
         mp'       = insertTag mp color index tag
-        children' = prune' index' colors mp' children        
+        goods'    = if tag == G
+                    then M.insert index color goods
+                    else goods
+        children' = prune' index' colors mp' goods' children
 
         valid = case tag of
-          G -> sameColorIs (\x -> x==G||x==B) && sameColorIndexIs (==G)
+          G -> sameColorIs (\x -> x==G||x==B) && sameColorIndexIs (==G) && sameGoodIndexIs (==color)
           B -> sameColorIs (\x -> x==G||x==B) && sameColorIndexIs (==B)
           W -> sameColorIs (==W)
         
-        sameColorIs p = and $ map p $ mp `ofColor` color
-        sameColorIndexIs p = maybe True p $ ofColorIndex mp color index                    
+        sameColorIs      p = and $ map p $ mp `ofColor` color
+        sameColorIndexIs p = maybe True p $ ofColorIndex mp color index
+        sameGoodIndexIs  p = maybe True p $ M.lookup index goods
 
 ofColor :: TagMap -> Color -> [HintTag]
 ofColor mp color = maybe [] M.elems $ M.lookup color mp

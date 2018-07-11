@@ -46,4 +46,4 @@ enumerateTree n nodes =
     f n (Node label children) = map (label:) $
       concatMap (f $ n-1) children
 
-debug msg x = trace (msg ++ ": " ++ show x) x
+debug msg x = trace ("[DEBUG] " ++ msg ++ ": " ++ show x) x

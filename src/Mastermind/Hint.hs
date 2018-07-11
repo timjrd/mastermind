@@ -24,7 +24,7 @@ stdHint secret x =
       secretSet = S.fromList secret'
       zipped    = zip secret' x'
       goods     = map g zipped
-      bads      = map b  zipped
+      bads      = map b zipped
       g (s,a)   = fromEnum $ a == s
       b (s,a)   = fromEnum $ a /= s && S.member a secretSet
   in Hint (foldl (+) 0 goods) (foldl (+) 0 bads)

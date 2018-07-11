@@ -25,17 +25,7 @@ data Constraints = Constraints
                    [Maybe Color] -- positive color  at each index
                    [S.IntSet]    -- negative colors at each index
                    S.IntSet      -- required colors
-
-instance Semigroup Constraints where
-  (Constraints a b c) <> (Constraints a' b' c') = Constraints
-    (zip a a' & map (uncurry eitherJust))
-    (zip b b' & map (uncurry S.union))
-    (S.union c c')
-    where
-      eitherJust Nothing Nothing = Nothing      
-      eitherJust Nothing x       = x
-      eitherJust x       Nothing = x
-      eitherJust x       _       = x
+  deriving Show
 
 secrets :: ( Combination c
            , Integral i
@@ -43,7 +33,7 @@ secrets :: ( Combination c
            , _ )
         => [(c,Hint)] -> Env [c]
 secrets constraints =
-  hintPermutations constraints
+  (debug "hintPermutations" <$> hintPermutations constraints)
   >>= mapM (toSecrets colors)
   <&> concat
   where colors = unzip constraints & fst & map toList
@@ -57,22 +47,34 @@ toSecrets colors tags =
   <&> enumerateTree ?holes
   <&> map fromList
 
+toConstraints :: _ => [[(Color,HintTag)]] -> Constraints
+toConstraints ps = debug "Constraints" $
+  foldl appendConstraints emptyConstraints $ map f ps
+  where
+    f p = Constraints a (map (uncurry S.union) $ zip b $ repeat b') c
+      where (a,b,c,b') = foldr g ([], [], S.empty, S.empty) p
+
+    g (color,tag) (a,b,c,b') = case tag of
+      G -> (Just color : a,           S.empty : b, S.insert color c, b')
+      B -> (   Nothing : a, S.singleton color : b, S.insert color c, b')
+      W -> (   Nothing : a,           S.empty : b,                c, S.insert color b')
+
+appendConstraints (Constraints a b c) (Constraints a' b' c') =
+  Constraints
+  (zip a a' & map (uncurry eitherJust))
+  (zip b b' & map (uncurry S.union))
+  (S.union c c')
+  where
+    eitherJust Nothing Nothing = Nothing      
+    eitherJust Nothing x       = x
+    eitherJust x       Nothing = x
+    eitherJust x       _       = x
+
 emptyConstraints :: _ => Constraints
 emptyConstraints = Constraints
   (replicate ?holes Nothing)
   (replicate ?holes S.empty)
   S.empty
-
-toConstraints :: _ => [[(Color,HintTag)]] -> Constraints
-toConstraints ps = foldl (<>) emptyConstraints $ map f ps
-  where
-    f p = Constraints a (map (uncurry S.union) $ zip b $ repeat b') c
-      where (a,b,c,b') = foldl g ([], [], S.empty, S.empty) p
-
-    g (a,b,c,b') (color,tag) = case tag of
-      G -> (Just color : a,           S.empty : b, S.insert color c, b')
-      B -> (   Nothing : a, S.singleton color : b, S.insert color c, b')
-      W -> (   Nothing : a,           S.empty : b,                c, S.insert color b')
 
 tree :: _ => Constraints -> Env (Forest Color)
 tree ct@(Constraints _ _ c) = tree' ?holes (S.size c) ct

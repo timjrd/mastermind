@@ -10,7 +10,7 @@ let
 in
   with nixpkgs;
   let
-    haskellEnv = haskell.packages.ghc841.ghcWithPackages
+    haskellEnv = haskell.packages.ghc822.ghcWithPackages
       (haskellPackages: with haskellPackages; [
         MonadRandom
         random-shuffle

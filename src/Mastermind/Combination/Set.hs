@@ -8,7 +8,7 @@ module Mastermind.Combination.Set
 
 import Mastermind.Combination (Combination)
 
-class Combination c => Set s c where
+class (Eq s, Combination c) => Set s c where
   empty     :: (?combination :: c, ?set :: s) => s
   fromList  :: (?combination :: c, ?set :: s) => [c] -> s
   member    :: (?combination :: c, ?set :: s) => c -> s -> Bool

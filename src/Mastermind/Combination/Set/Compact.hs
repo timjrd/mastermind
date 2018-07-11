@@ -9,6 +9,7 @@ import qualified Mastermind.Combination.Compact as C
 import qualified Mastermind.Combination.Compact.Internal as CI
 
 newtype Compact = Compact S.IntSet
+  deriving Eq
 
 instance Set Compact C.Compact where
   empty = Compact S.empty

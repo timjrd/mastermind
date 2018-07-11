@@ -1,14 +1,16 @@
 import System.Random (StdGen, getStdGen)
 import Data.Maybe
+import Data.List
 import Control.Monad
 import qualified Data.IntSet as IS
+import qualified Data.Set as Set
 
 import Mastermind.Util
 import Mastermind.Env
 import Mastermind.Combination
-import qualified Mastermind.Combination.Compact as C
-import qualified Mastermind.Combination.Set
-import qualified Mastermind.Combination.Set.Compact as S
+import qualified Mastermind.Combination.Compact as CC
+import qualified Mastermind.Combination.Set as S
+import qualified Mastermind.Combination.Set.Compact as CS
 import Mastermind.Candidate
 import Mastermind.Secret
 import Mastermind.Hint
@@ -27,24 +29,31 @@ f :: ( Combination c
   => Env _
 f = do
   secret <- random
-  --let secret = fromList [0,1,1,1]
+  --let secret = fromList [0,1]
 
-  cs <- replicateM 15 $ do
+  cs <- replicateM 3 $ do
     r <- random
-    --let r = fromList [1,1,1,0]
-    let h = ?hint secret r
+    --let r = fromList [1,0]
+    let h = ?hint
+            (fromList $ debug "secret" $ toList secret)
+            r
     return (r,h)
 
-  --map (map $ concatMap show) <$> hintPermutations cs
-  map toList <$> secrets cs
+  fast <- Set.fromList <$> map toList <$> secrets (
+    (flip traceShow) cs $ map (toList . fst) cs )
+  slow <- Set.fromList <$> map toList <$> genericSecrets cs
+  
+  return $ [ ("good"           , Set.toList $ Set.intersection fast slow)
+           , ("not found"      , Set.toList $ slow Set.\\ fast)
+           , ("false positives", Set.toList $ fast Set.\\ slow) ]
 
 run :: StdGen -> _
 run g =
   let
-    ?colors = 9
-    ?holes  = 9
-    ?combination = C.compact
-    ?set         = S.compact
+    ?colors = 8
+    ?holes  = 4
+    ?combination = CC.compact
+    ?set         = CS.compact
   in let
     ?cardinality = cardinality :: Int
     ?powers      = powers :: [Int]
@@ -56,4 +65,7 @@ run g =
 main :: IO ()
 main = do
   g <- getStdGen
-  mapM_ print $ run g
+  forM_ (run g) $ \(title,cs) -> do
+    putStrLn title
+    mapM_ print cs
+    putStrLn ""
