@@ -18,6 +18,7 @@ import Mastermind.Combination
 import Mastermind.Combination.Set (Set, empty, member, insert)
 import Mastermind.Hint
 import Mastermind.Permutation
+import Mastermind.Candidate
 
 type Color = Int
 
@@ -33,9 +34,12 @@ secrets :: ( Combination c
            , _ )
         => [(c,Hint)] -> Env [c]
 secrets constraints =
-  (debug "hintPermutations" <$> hintPermutations constraints)
-  >>= mapM (toSecrets colors)
-  <&> concat
+  -- if null constraints
+  -- then candidates []
+  -- else
+    hintPermutations constraints
+    >>= mapM (toSecrets colors)
+    <&> concat
   where colors = unzip constraints & fst & map toList
 
 toSecrets :: _ => Combination c => [[Color]] -> [HintPermutation] -> Env [c]
@@ -48,7 +52,7 @@ toSecrets colors tags =
   <&> map fromList
 
 toConstraints :: _ => [[(Color,HintTag)]] -> Constraints
-toConstraints ps = debug "Constraints" $
+toConstraints ps =
   foldl appendConstraints emptyConstraints $ map f ps
   where
     f p = Constraints a (map (uncurry S.union) $ zip b $ repeat b') c

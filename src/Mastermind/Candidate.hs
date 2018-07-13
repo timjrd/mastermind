@@ -2,6 +2,8 @@ module Mastermind.Candidate
   ( candidates
   , candidatesOverlap ) where
 
+import Control.Monad.Random (interleave)
+
 import Mastermind.Util
 import Mastermind.Env
 import Mastermind.Combination (Combination,random)
@@ -17,7 +19,7 @@ candidate excluded = do
 candidates :: _ => Combination c => [c] -> Env [c]
 candidates excluded = f (length excluded) (fromList excluded)
   where
-    f n excluded = do
+    f n excluded = interleave $ do
       if fromIntegral n >= ?cardinality
         then return []
         else do
@@ -28,7 +30,7 @@ candidates excluded = f (length excluded) (fromList excluded)
 candidatesOverlap :: _ => Combination c => [c] -> Env [c]
 candidatesOverlap excluded = f (fromList excluded)
   where
-    f excluded = do
+    f excluded = interleave $ do
       r  <- candidate excluded
       rs <- f excluded
       return $ r:rs

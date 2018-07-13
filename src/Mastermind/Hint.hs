@@ -11,7 +11,10 @@ import Mastermind.Combination
 
 data Hint = Hint { good :: Int
                  , bad  :: Int }
-  deriving (Eq, Show)
+  deriving (Eq, Ord)
+
+instance Show Hint where
+  show (Hint g b) = show (g,b)
 
 stdHint :: ( Integral i
            , Combination c

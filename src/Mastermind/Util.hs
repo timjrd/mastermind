@@ -1,6 +1,7 @@
 module Mastermind.Util where
 
 import Data.Tree
+import Data.List (maximumBy)
 
 import Debug.Trace
 
@@ -47,3 +48,4 @@ enumerateTree n nodes =
       concatMap (f $ n-1) children
 
 debug msg x = trace ("[DEBUG] " ++ msg ++ ": " ++ show x) x
+
