@@ -1,5 +1,6 @@
-module Mastermind.Util where
+module Util where
 
+import Data.Maybe
 import Data.Tree
 import Data.List (maximumBy)
 
@@ -32,6 +33,10 @@ uncurry3 f (a,b,c) = f a b c
 boolToMaybe :: Bool -> Maybe ()
 boolToMaybe True  = Just ()
 boolToMaybe False = Nothing
+
+infixr 2 |||
+(|||) :: Maybe a -> Maybe a -> Maybe a
+a ||| b = if isJust a then a else b
 
 -- enumerate :: [[a]] -> [[a]]
 -- enumerate []     = [[]]

@@ -4,7 +4,7 @@ import qualified Data.Set as S
 import Data.List (maximumBy)
 import Data.Ord (comparing)
 
-import Mastermind.Util
+import Util
 import Mastermind.Env
 import Mastermind.Hint
 import Mastermind.Combination

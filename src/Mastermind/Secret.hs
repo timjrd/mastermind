@@ -12,7 +12,7 @@ import System.Random.Shuffle
 import Control.Monad.Random (interleave)
 import qualified Data.IntSet as S
 
-import Mastermind.Util
+import Util
 import Mastermind.Env
 import Mastermind.Combination
 import Mastermind.Combination.Set (Set, empty, member, insert)
@@ -65,14 +65,9 @@ toConstraints ps =
 
 appendConstraints (Constraints a b c) (Constraints a' b' c') =
   Constraints
-  (zip a a' & map (uncurry eitherJust))
+  (zip a a' & map (uncurry (|||)))
   (zip b b' & map (uncurry S.union))
   (S.union c c')
-  where
-    eitherJust Nothing Nothing = Nothing      
-    eitherJust Nothing x       = x
-    eitherJust x       Nothing = x
-    eitherJust x       _       = x
 
 emptyConstraints :: _ => Constraints
 emptyConstraints = Constraints

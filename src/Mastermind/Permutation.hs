@@ -15,7 +15,7 @@ import qualified Data.IntMap as M
 import Control.Monad.Random (interleave)
 import System.Random.Shuffle
 
-import Mastermind.Util
+import Util
 import Mastermind.Env
 import Mastermind.Combination
 import Mastermind.Hint

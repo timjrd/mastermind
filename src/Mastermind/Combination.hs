@@ -7,7 +7,9 @@ import Mastermind.Env
 class Combination c where
   random   :: ( Integral i
               , ?combination :: c
-              , ?cardinality :: i )
+              , ?cardinality :: i
+              , ?colors      :: Int
+              , ?holes       :: Int )
            => Env c
   
   fromList :: ( Integral i

@@ -4,7 +4,7 @@ module Mastermind.Candidate
 
 import Control.Monad.Random (interleave)
 
-import Mastermind.Util
+import Util
 import Mastermind.Env
 import Mastermind.Combination (Combination,random)
 import Mastermind.Combination.Set

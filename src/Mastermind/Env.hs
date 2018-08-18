@@ -2,7 +2,7 @@ module Mastermind.Env where
 
 import Control.Monad.Random
 
-import Mastermind.Util
+import Util
 
 type Env a = Rand StdGen a
 
