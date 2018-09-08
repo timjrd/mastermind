@@ -30,7 +30,7 @@ in with nixpkgs; stdenv.mkDerivation rec {
       inconsolata upquote
       euler
       tikz-qtree pgf
-      # qtree pict2e
+      biblatex etoolbox logreq xstring
     ;})
   ];
 
@@ -38,7 +38,9 @@ in with nixpkgs; stdenv.mkDerivation rec {
   
   buildPhase = ''
     pdflatex -draftmode ${file}.tex
-    pdflatex ${file}.tex
+    bibtex              ${file}
+    pdflatex -draftmode ${file}.tex
+    pdflatex            ${file}.tex
   '';
   
   installPhase = "cp ${file}.pdf $out";

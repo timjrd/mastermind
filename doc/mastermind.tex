@@ -15,6 +15,7 @@
 \usepackage{sectsty}
 
 \usepackage{tocloft}
+%\usepackage[nottoc,notlof,notlot]{tocbibind}
 
 \definecolor{brick}{rgb}{0.6,0,0}
 
@@ -30,7 +31,24 @@
 \usepackage{tabu}
 \usepackage{mathtools}
 \usepackage{fixltx2e}
-\usepackage[colorlinks=true,linkcolor=brick,urlcolor=brick,linktoc=all]{hyperref}
+\usepackage
+    [ colorlinks=true,
+      linkcolor=brick,
+      citecolor=brick,
+      urlcolor=brick,
+      linktoc=all
+    ] {hyperref}
+
+\usepackage[backend=bibtex]{biblatex}
+\addbibresource{mastermind.bib}
+\DeclareFieldFormat{labelnumberwidth}{\textbf{\color{brick} \{#1\}}}
+
+\newcommand{\citewrapper}[1]{\textsuperscript{\textbf{\color{brick} \{#1\}}}}
+\DeclareCiteCommand{\cite}[\citewrapper]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}\usebibmacro{cite}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
 
 \usepackage{tikz}
 \usepackage{tikz-qtree}
@@ -74,22 +92,29 @@
 
 \newcommand{\lnd}{\,\land\,}
 
-\newcommand{\TODO}{\framebox{\textbf{\textit{TODO}}}}
+\newcommand{\TODO}{\colorbox{black}{\textbf{\texttt{\large\color{white}TODO}}}}
 
 \newcommand{\srcref}[1]{\href{https://github.com/timjrd/mastermind/blob/master/#1}{\texttt{#1}}}
 
 % TOC
-\renewcommand{\cftdot}{\(-\)}
-\renewcommand{\cftsecleader}{\hspace{1em}\cftdotfill{-1}}
-\renewcommand{\cftsubsecleader}{\hspace{1em}\cftdotfill{-1}}
-\renewcommand{\cftsubsubsecleader}{\hspace{1em}\cftdotfill{-1}}
+\renewcommand{\cftsecleader}{\hspace{2em}}
+\renewcommand{\cftsecafterpnum}{\cftparfillskip}
+\renewcommand{\cftsecpagefont}{\normalfont\itshape}
 
-\title{Programme-joueur de Mastermind paramétrique}
+\renewcommand{\cftsubsecleader}{\hspace{2em}}
+\renewcommand{\cftsubsecafterpnum}{\cftparfillskip}
+\renewcommand{\cftsubsecpagefont}{\normalfont\itshape}
+
+\renewcommand{\cftsubsubsecleader}{\hspace{2em}}
+\renewcommand{\cftsubsubsecafterpnum}{\cftparfillskip}
+\renewcommand{\cftsubsubsecpagefont}{\normalfont\itshape}
+
+\renewcommand{\cftpnumalign}{l}
+
+\title{Programme-joueur de \\ Mastermind paramétrique}
 \author{Timothée Jourde}
 
 \begin{document}
-%\sloppy
-
 
 %\usetagform{arabic}
 
@@ -153,8 +178,7 @@ tentatives.
 
 \subsection{Présentation de l'algorithme}
 
-On souhaite réaliser un programme-joueur de Mastermind (avec \(n\) et \(m\) paramétrables) capable de
-deviner \(c_s\) en un nombre raisonable de tentatives.
+On souhaite réaliser un programme-joueur de Mastermind (avec \(n\) et \(m\) paramétrables) capable de deviner \(c_s\) en un nombre raisonable de tentatives. L'algorithme présenté ci-après est inspiré d'une méthode\cite{sat} mise au point par Miroslav Klimoš et Antonín Kučera.
 
 Pour un \(n\) et \(m\) fixé, on pose :
 
@@ -326,6 +350,8 @@ Voir \srcref{src/Mastermind/Secret.hs}.
 \section{Conslusion}
 
 \TODO
+
+\printbibliography[heading=bibintoc]
 
 \end{document}
 
