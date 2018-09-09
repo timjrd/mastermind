@@ -31,6 +31,7 @@ in with nixpkgs; stdenv.mkDerivation rec {
       euler
       tikz-qtree pgf
       biblatex etoolbox logreq xstring
+      wrapfig
     ;})
   ];
 

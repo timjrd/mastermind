@@ -5,6 +5,8 @@
 \frenchbsetup{FrenchFootnotes=false}
 \usepackage[hang,flushmargin]{footmisc}
 
+\usepackage{wrapfig}
+
 % FONTS
 \renewcommand{\familydefault}{\sfdefault}
 \usepackage{biolinum}
@@ -54,6 +56,14 @@
 \usepackage{tikz-qtree}
 \usetikzlibrary{babel}
 
+\newcommand{\netree}{
+  \begin{tikzpicture}
+    [ baseline=(current bounding box.center),
+      execute at begin node=\(,
+      execute at end node=\),
+      edge from parent/.style={draw=none} ]
+    \Tree
+}
 \newcommand{\tree}{
   \begin{tikzpicture}
     [ baseline=(current bounding box.center),
@@ -68,13 +78,16 @@
 \usepackage{parskip}
 \usepackage{enumitem}
 
-\setlist[itemize]{leftmargin=*}
+\setlist[itemize]{leftmargin=*,topsep=0pt,partopsep=0pt,parsep=3pt,itemsep=0pt}
 
 \renewcommand{\theequation}{\textbf{\arabic{equation}}}
 \newtagform{brackets}{\textbf{[}}{\textbf{]}}
 \usetagform{brackets}
 
 \newcommand{\isep}{\,..\,}
+
+\usepackage{amssymb}
+\renewcommand{\emptyset}{\varnothing}
 
 \renewcommand{\(}{\begin{math}\color{brick}}
 \renewcommand{\)}{\end{math}}
@@ -109,6 +122,9 @@
 \renewcommand{\cftsubsubsecafterpnum}{\cftparfillskip}
 \renewcommand{\cftsubsubsecpagefont}{\normalfont\itshape}
 
+\newcommand{\ttl}[1]{{\Large\color{brick}#1}}
+\newcommand{\vsp}{\vspace{0.3cm}}
+
 \renewcommand{\cftpnumalign}{l}
 
 \title{Programme-joueur de \\ Mastermind paramétrique}
@@ -116,19 +132,82 @@
 
 \begin{document}
 
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{0pt}
+
 %\usetagform{arabic}
 
-\maketitle
+%\maketitle
 
-%% \begin{abstract}
-%%   hello
-%% \end{abstract}
+\begin{titlepage}
+  \centering
+  \large
+
+  {
+    Université de Bordeaux
+  }
+  
+  \vfill
+
+  {
+    \ttl{\Huge Programme-joueur de \\ Mastermind paramétrique}
+    
+    \ttl{Stage de première année de Master Informatique}
+  }
+  
+  \vfill
+
+  {
+    \textit{Timothée Jourde}
+  }
+         
+  \vfill
+
+  {
+    \ttl{Maîtres de stage}
+    
+    \vsp
+    
+    \textit{Hugo Gimbert \\ Nathanaël Fijalkow}
+    
+    \vsp
+    
+    Laboratoire Bordelais de \\ Recherche en Informatique
+  }
+  
+  \vfill
+
+  {
+    \ttl{Enseignant-référent}
+    
+    \vsp
+    
+    \textit{Grégoire Passault}
+  }
+  
+  \vfill
+
+  {
+    \today
+  }
+\end{titlepage}
+
+\clearpage
 
 {\color{brick}\tableofcontents}
 
 \section{Introduction}
 
-\TODO
+\begin{wrapfigure}{r}{11em}
+  \vspace{-\baselineskip}
+  \includegraphics[width=11em]{mastermind.png}
+\end{wrapfigure}
+
+Le Mastermind\footnote{\url{https://en.wikipedia.org/wiki/Mastermind_(board_game)}} est un jeu de logique où l'un des deux joueurs doit deviner un code secret à partir des indications données par l'autre joueur. La version originale du Mastermind se joue avec un code de quatres pions colorés choisis parmis un ensemble de six couleurs.
+
+L'objectif de ce stage est de réaliser un programme-joueur de Mastermind, avec une taille de code et un nombre de couleurs paramétrables à l'exécution.
 
 \section{Objectif}
 
@@ -137,18 +216,29 @@
 On formalise une partie de Mastermind par :
 
 \begin{itemize}
+  
 \item une taille de combinaison \(n\)
+  
 \item un nombre de couleurs \(m\)
+  
 \item une combinaison secrète \(c_s : [1 \isep n] \rightarrow [1 \isep m]\)
+  
 \item une suite de tentatives \((c_i, h(c_s,c_i))\), où :
+  
   \begin{itemize}
+    
   \item \(i \in [1 \isep ]\) est la tentative
+    
   \item \(c_i : [1 \isep n] \rightarrow [1 \isep m]\) est la combinaison jouée
+    
   \item \(h(s,c) = (g,b)\) est la fonction associant une indication \((g,b)\) à une combinaison secrète \(s\) et à une combinaison jouée \(c\), où :
+    
     \begin{itemize}
+      
     \item \(g\) est le nombre de couleurs de \(c\) correspondantes
       à celles de \(s\) et à la même position (couleurs ``bien
       placés'').
+      
       \blockmath{
         g = \sum_{j=0}^{n}
         \begin{cases}
@@ -156,9 +246,11 @@ On formalise une partie de Mastermind par :
           0 & \text{sinon}
         \end{cases}
       }
+      
     \item \(b\) est le nombre de couleurs de \(c\) correspondantes
       à celles de \(s\) mais pas à la même position (couleurs ``mal
       placés'').
+      
       \blockmath{
         b = \sum_{j=0}^{n}
         \begin{cases}
@@ -166,6 +258,7 @@ On formalise une partie de Mastermind par :
           0 & \text{sinon}
         \end{cases}
       }
+      
     \end{itemize}
   \end{itemize}
 \end{itemize}
@@ -185,39 +278,46 @@ Pour un \(n\) et \(m\) fixé, on pose :
 \begin{itemize}
   
 \item \(C\) l'ensemble des combinaisons.
+  
 \item \(C_i\) l'ensemble des combinaisons privé des combinaisons déjà jouées lors des tentatives précédentes à la tentative \(i\) (combinaisons candidates).
+  
   \blockmath{
     C_i = C \setminus \{c_j \mid j \in [1 \isep i-1]\}
   }
 
 \item \(S_i\) l'ensemble des combinaisons secrètes possibles à la tentative \(i\).
+  
   \nblockmath{ \label{pred}
     S_i = \{s \mid s \in C \lnd j \in [1 \isep i-1] \lnd h(s,c_j) = h(c_s,c_j)\}
   }
 
 \item \(K_i\) : pour chaque combinaison \(c\) de \(C\), on génère un ensemble d'indications \((s,h(s,c))\) avec chaque combinaison secrète \(s\) de \(S_i\).
+  
   \nblockmath{ \label{prod}
     K_i = \{ \ (c, \ \{(s,h(s,c)) \mid s \in S_i\}) \ \mid \ c \in C_i \ \}
   }
-  
+
 \end{itemize}
 
 On associe un score \(k(K_c)\) à chaque combinaison, et on déduis la prochaine combinaison jouée \(c_i\) du score maximal.
+
 \blockmath{
   c_i = c \mid (c,K_c) \in K_i \lnd (c',K_c') \in K_i \lnd k(K_c) \geq k(K_c')
 }
 
 Le choix de la fonction \(k\) associant un score à un ensemble d'indications \(K_c\) déterminera la façon dont l'algorithme convergera. On peut simplement choisir le cardinal de l'ensemble sans tenir compte des combinaisons secrètes \(s\) associés. Cela aura pour effet de maximiser le fractionnement de \(S_i\) dans le cas moyen.
+
 \blockmath{
   k(K_c) = | \ \{ h' \mid (s,h') \in K_c\} \ |
 }
 
 
 \section{Réalisation}
+\label{random}
 
 Nous allons maintenant nous focaliser sur les étapes clefs de l'algorithme décrit précédement et en expliquer l'implémentation. Les sources de ce programme écrit en Haskell\footnote{\url{https://www.haskell.org}} sont disponibles en ligne : \url{https://github.com/timjrd/mastermind}.
 
-Tel que nous l'avons décrit, l'algorithme nécessite de calculer un produit cartesien\seqref{prod} \(K_i\) entre \(C_i\) et \(S_i\), hors cette opération est très coûteuse et nécessite d'énumérer complétement les deux ensembles, ce qui deviens hors de portée lorsque \(n\) et \(m\) sont trop grand. On approxime donc \(K_i\) par une méthode de type monte-carlo en énumérant seulement un sous-ensemble randomisé de \(C_i\) et de \(S_i\).
+Tel que nous l'avons décrit, l'algorithme nécessite de calculer un produit cartésien\seqref{prod} \(K_i\) entre \(C_i\) et \(S_i\), hors cette opération est très coûteuse et nécessite d'énumérer complétement les deux ensembles, ce qui deviens hors de portée lorsque \(n\) et \(m\) sont trop grand. On approxime donc \(K_i\) par une méthode de type monte-carlo en énumérant seulement un sous-ensemble randomisé de \(C_i\) et de \(S_i\).
 
 \subsection{Énumération des combinaisons candidates $ C_i $}
 
@@ -229,16 +329,16 @@ On cherche à énumérer un sous-ensemble randomisé de \(C_i\). On génère pou
 
 On cherche à énumérer un sous-ensemble randomisé de \(S_i\). On peut aborder le problème de la même manière que pour \(C_i\) : générer une suite de combinaisons aléatoires \(s\) et vérifier que chacune satisfasse \(h(s,c_j) = h(c_s,c_j)\)\seqref{pred}. Cette première approche a été implémentée mais s'est avérée impraticable au delà d'un certain \(n\) et \(m\).
 
-Il a donc fallu chercher une autre solution : déduire directement \(S_i\) des tentatives précédentes (contraintes). La méthode ainsi retenue se déroule en deux étapes : l'énumération des ``permutations d'indications'', puis la génération des combinaisons secrètes à partir de ces permutations. Nous illustrerons cette partie par l'exemple suivant :
+Il a donc fallu chercher une autre solution : déduire directement \(S_i\) des tentatives précédentes (contraintes). La méthode ainsi retenue se déroule en deux étapes : l'énumération des ``permutations d'indications'', puis la génération des combinaisons secrètes à partir de ces permutations. Nous illustrerons cette section par l'exemple suivant :
 
 \blockmath{
   n = 3 \quad m = 3 \quad
-  \begin{tabu}{|l|l|l|}
+  \begin{tabu}{|c|c|c|}
     \everyrow{\hline}\hline
     c_s(1) & c_s(2) & c_s(3) \\
     3      & 1      & 3      \\
   \end{tabu} \quad 
-  \begin{tabu}{|l|l|l|l|l|}
+  \begin{tabu}{|c|c|c|c|c|}
     \everyrow{\hline}\hline
     i & c_i(1) & c_i(2) & c_i(3) & h(c_s,c_i) \\
     1 & 2      & 3      & 1      & (0,2)      \\
@@ -247,6 +347,7 @@ Il a donc fallu chercher une autre solution : déduire directement \(S_i\) des t
 }
 
 \subsubsection{Permutations d'indications}
+\label{perm}
 
 Voir \srcref{src/Mastermind/Permutation.hs}.
 
@@ -332,7 +433,7 @@ Chaque niveau de l'arbre correspond à une position et une couleur. Le second ni
         ]
       ]
   ] \donetree \qquad
-  \tree [ [.2 [.3 [.1 [.3 [.2 [.2 ] ] ] ] ] ] ] \donetree
+  \netree [ [.2 [.3 [.1 [.3 [.2 [.2 ] ] ] ] ] ] ] \donetree
 \end{equation*}
 
 On a entre autres supprimé le nœud \(\textsuperscript{+}\cancel{W}\) puisqu'il signifie ``\(2\) est une mauvaise couleur'' alors que le nœud ascendant \(\textsuperscript{+}B\) signie de manière contradictoire ``\(2\) est une bonne couleur mal placé''. De même, on a supprimé \(\textsuperscript{$*$}\cancel{G}\) qui signifie ``\(3\) est une bonne couleur bien placé'' alors que \(\textsuperscript{$*$}W\) signifie ``\(3\) est une mauvaise couleur''. Le chemin en gras est entièrement valide, on retiendra donc cette séquence d'étiquettes pour l'étape suivante.
@@ -341,15 +442,74 @@ On a entre autres supprimé le nœud \(\textsuperscript{+}\cancel{W}\) puisqu'il
 
 Voir \srcref{src/Mastermind/Secret.hs}.
 
-\TODO
+On retiens donc la séquence d'étiquettes \(WBBGWW\), soit \(WBB\) pour \(c_1\) et \(GWW\) pour \(c_2\). Pour chaque position de chaque combinaison, on détermine l'éventuelle couleur requise ainsi que les éventuelles couleurs exclues. On détermine également les couleurs requises sur l'ensemble d'une combinaison. On agrège ensuite les différentes contraintes ainsi obtenues.
+
+\blockmath{
+  \begin{tabu}{|r|c|c|c|}
+    \everyrow{\hline}\hline
+    c_1              & 2         & 3         & 1         \\
+    \text{étiquette} & W         & B         & B         \\
+    \text{requise}   & \emptyset & \emptyset & \emptyset \\
+    \text{exclues}   & \{2\}     & \{3,2\}   & \{1,2\}   \\
+    \text{requises}  & \multicolumn{3}{c|}{\{3,1\}}     \\
+  \end{tabu}
+  \cup
+  \begin{tabu}{|r|c|c|c|}
+    \everyrow{\hline}\hline
+    c_2              & 3         & 2         & 2         \\
+    \text{étiquette} & G         & W         & W         \\
+    \text{requise}   & \{3\}     & \emptyset & \emptyset \\
+    \text{exclues}   & \{2\}     & \{2\}     & \{2\}   \\
+    \text{requises}  & \multicolumn{3}{c|}{\{3\}}     \\
+  \end{tabu}
+  =
+  \begin{tabu}{|r|c|c|c|}
+    \everyrow{\hline}\hline
+    \text{requise}   & \{3\}     & \emptyset & \emptyset \\
+    \text{exclues}   & \{2\}     & \{3,2\}   & \{1,2\}   \\
+    \text{requises}  & \multicolumn{3}{c|}{\{3,1\}}      \\
+  \end{tabu}  
+}
+
+Enfin, on génère le sous-ensemble \(X\) de \(S_i\) correspondant à notre séquence d'étiquettes grâce à une structure arboressante à partir des contraintes agrégés obtenues précédemment.
+
+\begin{equation*}
+  \color{brick}
+  \tree [.{X \subset S_i} \edge[draw=none]; [.\bm{3}
+    \edge[ultra thick]; [.\bm{1}
+      \edge[dashed]; \cancel{1}
+      \edge[dashed]; \cancel{2}
+      \edge[ultra thick]; \bm{3}
+    ]
+    \edge[dashed]; \cancel{2}
+    \edge[dashed]; \cancel{3}
+  ] ]
+  \donetree \qquad
+  \netree [.\text{requise}  [.\{3\} [.{\emptyset} [.{\emptyset} ] ] ] ] \donetree \qquad
+  \netree [.\text{exclues}  [.\{2\} [.\{3,2\} [.\{1,2\} ] ] ] ] \donetree \qquad
+  \netree [.\text{requises} [.\{\cancel{3},1\} [.\{\cancel{1}\} [.{\emptyset} ] ] ] ] \donetree \qquad
+\end{equation*}
+
+On repète l'opération pour chaque séquence d'étiquette obtenue à l'étape précédente.
 
 \section{Limitations et améliorations possibles}
 
-\TODO
+\subsection{Randomisation}
+Comme évoqué au début de la section \ref{random}, on énumère un sous-ensemble {\em randomisé} de \(S_i\). Cette propriété est partiellement obtenue en randomisant les deux structures arborresantes utilisés. L'ordre des enfants d'un nœud est ainsi aléatoire ; on espère ainsi, lors du parcours final de l'arbre, énumérer l'ensemble correspondant dans un ordre aléatoire. Hors cette technique, bien que peu coûteuse, n'offre pas une randomisation de bonne qualité, ce qui risque d'affecter les résultats de l'algorithme.
+
+\subsection{Consomation mémoire}
+Par soucis de simplification du code, on utilise deux structures de données arboressantes intermédiares, et on exploite l'évaluation paresseuse de Haskell pour construire et consommer progressivement ces structures, à la demmande.
+
+Au delà d'un certain \(n\) et \(m\), on observe une explosion de la consomation mémoire. Cette consomation pourrai très certainement être réduite en se passant de ces structures intermédiares, au prix d'une obfuscation du code.
+
+\subsection{Paralélisation}
+Haskell étant un langage fonctionnel pur, il n'autorise aucun changement d'état ni effet de bord. Notre programme pourrai ansi être parallélisé sans réécriture majeur. Une première approche pourrai être de calculer simultanément la génération des combinaisons secrètes à partir des différentes séquences d'étiquettes.
 
 \section{Conslusion}
 
-\TODO
+Nous avons décrit dans ce rapport la réalisation de notre programme-joueur de Mastermind paramétrique. L'objectif de ce stage a été atteint avec un programme exécutable offrant des performances bien supérieures --- et des résultats au moins équivalents --- à une approche naïve par recherche exhaustive.
+
+Sur un plan personnel, j'ai trouvé ce stage très enrichissant puisqu'il m'a poussé à réfléchir au problème posé de manière formelle, et d'une façon approfondie. Je souhaite à ce titre remercier M. Hugo Gimbert ainsi que M. Nathanaël Fijalkow pour m'avoir donné l'opportunité de travailler sur ce sujet de stage, et pour m'avoir guider dans la réalisation du projet.
 
 \printbibliography[heading=bibintoc]
 
