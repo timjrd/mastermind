@@ -153,6 +153,8 @@
 
   {
     \ttl{\Huge Programme-joueur de \\ Mastermind paramétrique}
+
+    \vsp
     
     \ttl{Stage de première année de Master Informatique}
   }
@@ -180,7 +182,7 @@
   \vfill
 
   {
-    \ttl{Enseignant-référent}
+    \ttl{Enseignant référent}
     
     \vsp
     
@@ -205,7 +207,7 @@
   \includegraphics[width=11em]{mastermind.png}
 \end{wrapfigure}
 
-Le Mastermind\footnote{\url{https://en.wikipedia.org/wiki/Mastermind_(board_game)}} est un jeu de logique où l'un des deux joueurs doit deviner un code secret à partir des indications données par l'autre joueur. La version originale du Mastermind se joue avec un code de quatres pions colorés choisis parmis un ensemble de six couleurs.
+Le Mastermind\footnote{\url{https://en.wikipedia.org/wiki/Mastermind_(board_game)}} est un jeu de logique où l'un des deux joueurs doit deviner un code secret à partir des indications données par l'autre joueur. La version originale du Mastermind se joue avec un code de quatre pions colorés choisis parmi un ensemble de six couleurs.
 
 L'objectif de ce stage est de réaliser un programme-joueur de Mastermind, avec une taille de code et un nombre de couleurs paramétrables à l'exécution.
 
@@ -235,7 +237,7 @@ On formalise une partie de Mastermind par :
     
     \begin{itemize}
       
-    \item \(g\) est le nombre de couleurs de \(c\) correspondantes
+    \item \(g\) est le nombre de couleurs de \(c\) correspondant
       à celles de \(s\) et à la même position (couleurs ``bien
       placés'').
       
@@ -247,7 +249,7 @@ On formalise une partie de Mastermind par :
         \end{cases}
       }
       
-    \item \(b\) est le nombre de couleurs de \(c\) correspondantes
+    \item \(b\) est le nombre de couleurs de \(c\) correspondant
       à celles de \(s\) mais pas à la même position (couleurs ``mal
       placés'').
       
@@ -299,7 +301,7 @@ Pour un \(n\) et \(m\) fixé, on pose :
 
 \end{itemize}
 
-On associe un score \(k(K_c)\) à chaque combinaison, et on déduis la prochaine combinaison jouée \(c_i\) du score maximal.
+On associe un score \(k(K_c)\) à chaque combinaison, et on déduit la prochaine combinaison jouée \(c_i\) du score maximal.
 
 \blockmath{
   c_i = c \mid (c,K_c) \in K_i \lnd (c',K_c') \in K_i \lnd k(K_c) \geq k(K_c')
@@ -317,17 +319,17 @@ Le choix de la fonction \(k\) associant un score à un ensemble d'indications \(
 
 Nous allons maintenant nous focaliser sur les étapes clefs de l'algorithme décrit précédement et en expliquer l'implémentation. Les sources de ce programme écrit en Haskell\footnote{\url{https://www.haskell.org}} sont disponibles en ligne : \url{https://github.com/timjrd/mastermind}.
 
-Tel que nous l'avons décrit, l'algorithme nécessite de calculer un produit cartésien\seqref{prod} \(K_i\) entre \(C_i\) et \(S_i\), hors cette opération est très coûteuse et nécessite d'énumérer complétement les deux ensembles, ce qui deviens hors de portée lorsque \(n\) et \(m\) sont trop grand. On approxime donc \(K_i\) par une méthode de type monte-carlo en énumérant seulement un sous-ensemble randomisé de \(C_i\) et de \(S_i\).
+Tel que nous l'avons décrit, l'algorithme nécessite de calculer un produit cartésien\seqref{prod} \(K_i\) entre \(C_i\) et \(S_i\), or cette opération est très coûteuse et nécessite d'énumérer complétement les deux ensembles, ce qui devient hors de portée lorsque \(n\) et \(m\) sont trop grands. On approxime donc \(K_i\) par une méthode de type monte-carlo en énumérant seulement un sous-ensemble randomisé de \(C_i\) et de \(S_i\).
 
-\subsection{Énumération des combinaisons candidates $ C_i $}
+\subsection{Énumération des combinaisons candidates}
 
 Voir \srcref{src/Mastermind/Candidate.hs}.
 
 On cherche à énumérer un sous-ensemble randomisé de \(C_i\). On génère pour cela une suite de combinaisons aléatoires, et on vérifie simplement que chaque nouvelle combinaison est unique et n'a pas déjà été jouée.
 
-\subsection{Énumération efficace des combinaisons secrètes $ S_i $}
+\subsection{Énumération efficace des combinaisons secrètes}
 
-On cherche à énumérer un sous-ensemble randomisé de \(S_i\). On peut aborder le problème de la même manière que pour \(C_i\) : générer une suite de combinaisons aléatoires \(s\) et vérifier que chacune satisfasse \(h(s,c_j) = h(c_s,c_j)\)\seqref{pred}. Cette première approche a été implémentée mais s'est avérée impraticable au delà d'un certain \(n\) et \(m\).
+On cherche à énumérer un sous-ensemble randomisé de \(S_i\). On peut aborder le problème de la même manière que pour \(C_i\) : générer une suite de combinaisons aléatoires \(s\) et vérifier que chacune satisfasse \(h(s,c_j) = h(c_s,c_j)\)\seqref{pred}. Cette première approche a été implémentée mais s'est révélée impraticable au delà d'un certain \(n\) et \(m\).
 
 Il a donc fallu chercher une autre solution : déduire directement \(S_i\) des tentatives précédentes (contraintes). La méthode ainsi retenue se déroule en deux étapes : l'énumération des ``permutations d'indications'', puis la génération des combinaisons secrètes à partir de ces permutations. Nous illustrerons cette section par l'exemple suivant :
 
@@ -351,17 +353,17 @@ Il a donc fallu chercher une autre solution : déduire directement \(S_i\) des t
 
 Voir \srcref{src/Mastermind/Permutation.hs}.
 
-La première étape consiste à représenter les indications sous la forme de séquences d'étiquettes. \(G\) pour une bonne couleur bien placé, \(B\) pour une bonne couleur mal placé, \(W\) pour une mauvaise couleur. Appliquons ceci à notre exemple :
+La première étape consiste à représenter les indications sous la forme de séquences d'étiquettes. \(G\) pour une bonne couleur bien placée, \(B\) pour une bonne couleur mal placée, \(W\) pour une mauvaise couleur. Appliquons ceci à notre exemple :
 
 \blockmath{
   h(c_s,c_1) &= (0,2) \equiv P(BBW) \\
   h(c_s,c_2) &= (1,0) \equiv P(GWW)
 }
 
-Ici \(n = 3\) : on obtiens donc une séquence de trois étiquettes par combinaison jouée. En associant une séquence à sa combinaison, on associe dans l'ordre une étiquette à chaque membre\footnote{couleur et position} de la combinaison, et on exprime ainsi le fait qu'un membre en particulier est bien placé, mal placé, ou absent de la combinaison secrète. Une indication n'est cependant pas équivalente à une séquence particulière \(x\), mais à l'ensemble de ses permutations \(P(x)\), que l'on construit grâce à un arbre de permutation \(T_p(x)\) :
+Ici \(n = 3\) : on obtient donc une séquence de trois étiquettes par combinaison jouée. En associant une séquence à sa combinaison, on associe dans l'ordre une étiquette à chaque membre\footnote{couleur et position} de la combinaison, et on exprime ainsi le fait qu'un membre en particulier est bien placé, mal placé, ou absent de la combinaison secrète. Une indication n'est cependant pas équivalente à une séquence particulière \(x\), mais à l'ensemble de ses permutations \(P(x)\), que l'on construit grâce à un arbre de permutation \(T(x)\) :
 
 \blockmath{
-  T_p(BBW) = \tree [
+  T(BBW) = \tree [
     [.B
       [.B
         [.W
@@ -379,13 +381,13 @@ Ici \(n = 3\) : on obtiens donc une séquence de trois étiquettes par combinais
       ]
     ]
   ] \donetree \qquad  
-  T_p(GWW) = \tree [ [.G [.W W ] ] [.W [.G W ] [.W G ] ] ] \donetree
+  T(GWW) = \tree [ [.G [.W W ] ] [.W [.G W ] [.W G ] ] ] \donetree
 }
 
 On cherche maintenant à élaguer ces arbres pour ne conserver que les permutations valides au regard de l'ensemble des contraintes (une contrainte correspondant à un arbre). Il faut donc mettre en relation ces différents arbres, on procède ainsi à leur concaténation :
 
 \blockmath{
-  T_p(BBW) \cdot T_p(GWW) = \tree [
+  T(BBW) \cdot T(GWW) = \tree [
     [.B
       [.B
         [.W
@@ -408,7 +410,7 @@ On cherche maintenant à élaguer ces arbres pour ne conserver que les permutati
   ] \donetree
 }
 
-Chaque niveau de l'arbre correspond à une position et une couleur. Le second niveau correspond ainsi à \(c_1(2)=3\) tandis que le dernier niveau correspond à \(c_2(3)=2\). Pour élaguer l'arbre on effectue un parcourt en largeur depuis la raçine en supprimant les nœuds incompatibles avec leurs ancêtres. Illustrons cette opération avec notre exemple (les couleurs correspondantes sont représentées à droite de l'arbre) :
+Chaque niveau de l'arbre correspond à une position et à une couleur. Le second niveau correspond ainsi à \(c_1(2)=3\) tandis que le dernier niveau correspond à \(c_2(3)=2\). Pour élaguer l'arbre on effectue un parcours en largeur depuis la raçine en supprimant les nœuds incompatibles avec leurs ancêtres. Illustrons cette opération avec notre exemple (les couleurs correspondantes sont représentées à droite de l'arbre) :
 
 \begin{equation*}
   \color{brick}  
@@ -436,13 +438,13 @@ Chaque niveau de l'arbre correspond à une position et une couleur. Le second ni
   \netree [ [.2 [.3 [.1 [.3 [.2 [.2 ] ] ] ] ] ] ] \donetree
 \end{equation*}
 
-On a entre autres supprimé le nœud \(\textsuperscript{+}\cancel{W}\) puisqu'il signifie ``\(2\) est une mauvaise couleur'' alors que le nœud ascendant \(\textsuperscript{+}B\) signie de manière contradictoire ``\(2\) est une bonne couleur mal placé''. De même, on a supprimé \(\textsuperscript{$*$}\cancel{G}\) qui signifie ``\(3\) est une bonne couleur bien placé'' alors que \(\textsuperscript{$*$}W\) signifie ``\(3\) est une mauvaise couleur''. Le chemin en gras est entièrement valide, on retiendra donc cette séquence d'étiquettes pour l'étape suivante.
+On a entre autre supprimé le nœud \(\textsuperscript{+}\cancel{W}\) puisqu'il signifie ``\(2\) est une mauvaise couleur'' alors que le nœud ascendant \(\textsuperscript{+}B\) signie de manière contradictoire ``\(2\) est une bonne couleur mal placée''. De même, on a supprimé \(\textsuperscript{$*$}\cancel{G}\) qui signifie ``\(3\) est une bonne couleur bien placée'' alors que \(\textsuperscript{$*$}W\) signifie ``\(3\) est une mauvaise couleur''. Le chemin en gras est entièrement valide, on retiendra donc cette séquence d'étiquettes pour l'étape suivante.
 
 \subsubsection{Génération des combinaisons secrètes}
 
 Voir \srcref{src/Mastermind/Secret.hs}.
 
-On retiens donc la séquence d'étiquettes \(WBBGWW\), soit \(WBB\) pour \(c_1\) et \(GWW\) pour \(c_2\). Pour chaque position de chaque combinaison, on détermine l'éventuelle couleur requise ainsi que les éventuelles couleurs exclues. On détermine également les couleurs requises sur l'ensemble d'une combinaison. On agrège ensuite les différentes contraintes ainsi obtenues.
+On retient donc la séquence d'étiquettes \(WBBGWW\), soit \(WBB\) pour \(c_1\) et \(GWW\) pour \(c_2\). Pour chaque position de chaque combinaison, on détermine l'éventuelle couleur requise ainsi que les éventuelles couleurs exclues. On détermine également les couleurs requises sur l'ensemble d'une combinaison. On agrège ensuite les différentes contraintes ainsi obtenues.
 
 \blockmath{
   \begin{tabu}{|r|c|c|c|}
@@ -471,7 +473,7 @@ On retiens donc la séquence d'étiquettes \(WBBGWW\), soit \(WBB\) pour \(c_1\)
   \end{tabu}  
 }
 
-Enfin, on génère le sous-ensemble \(X\) de \(S_i\) correspondant à notre séquence d'étiquettes grâce à une structure arboressante à partir des contraintes agrégés obtenues précédemment.
+Enfin, on génère le sous-ensemble \(X\) de \(S_i\) correspondant à notre séquence d'étiquettes grâce à une structure arboressante à partir des contraintes agrégées obtenues précédemment.
 
 \begin{equation*}
   \color{brick}
@@ -490,20 +492,20 @@ Enfin, on génère le sous-ensemble \(X\) de \(S_i\) correspondant à notre séq
   \netree [.\text{requises} [.\{\cancel{3},1\} [.\{\cancel{1}\} [.{\emptyset} ] ] ] ] \donetree \qquad
 \end{equation*}
 
-On repète l'opération pour chaque séquence d'étiquette obtenue à l'étape précédente.
+On repète l'opération pour chaque séquence d'étiquettes obtenues à l'étape précédente.
 
 \section{Limitations et améliorations possibles}
 
 \subsection{Randomisation}
-Comme évoqué au début de la section \ref{random}, on énumère un sous-ensemble {\em randomisé} de \(S_i\). Cette propriété est partiellement obtenue en randomisant les deux structures arborresantes utilisés. L'ordre des enfants d'un nœud est ainsi aléatoire ; on espère ainsi, lors du parcours final de l'arbre, énumérer l'ensemble correspondant dans un ordre aléatoire. Hors cette technique, bien que peu coûteuse, n'offre pas une randomisation de bonne qualité, ce qui risque d'affecter les résultats de l'algorithme.
+Comme évoqué au début de la section \ref{random}, on énumère un sous-ensemble {\em randomisé} de \(S_i\). Cette propriété est partiellement obtenue en randomisant les deux structures arborresantes utilisées. L'ordre des enfants d'un nœud est ainsi aléatoire ; on espère ainsi, lors du parcours final de l'arbre, énumérer l'ensemble correspondant dans un ordre aléatoire. Or cette technique, bien que peu coûteuse, n'offre pas une randomisation de bonne qualité, ce qui risque d'affecter les résultats de l'algorithme.
 
-\subsection{Consomation mémoire}
-Par soucis de simplification du code, on utilise deux structures de données arboressantes intermédiares, et on exploite l'évaluation paresseuse de Haskell pour construire et consommer progressivement ces structures, à la demmande.
+\subsection{Consommation mémoire}
+Par soucis de simplification du code, on utilise deux structures de données arboressantes intermédiaires, et on exploite l'évaluation paresseuse de Haskell pour construire et consommer progressivement ces structures, à la demmande.
 
-Au delà d'un certain \(n\) et \(m\), on observe une explosion de la consomation mémoire. Cette consomation pourrai très certainement être réduite en se passant de ces structures intermédiares, au prix d'une obfuscation du code.
+Au delà d'un certain \(n\) et \(m\), on observe une explosion de la consommation mémoire. Cette consommation pourrai très certainement être réduite en se passant de ces structures intermédiares, au prix d'une obfuscation du code.
 
-\subsection{Paralélisation}
-Haskell étant un langage fonctionnel pur, il n'autorise aucun changement d'état ni effet de bord. Notre programme pourrai ansi être parallélisé sans réécriture majeur. Une première approche pourrai être de calculer simultanément la génération des combinaisons secrètes à partir des différentes séquences d'étiquettes.
+\subsection{Parallélisation}
+Haskell étant un langage fonctionnel pur, il n'autorise aucun changement d'état ni effet de bord. Notre programme pourrait ansi être parallélisé sans réécriture majeur. Une première approche pourrait être de calculer simultanément la génération des combinaisons secrètes à partir des différentes séquences d'étiquettes.
 
 \section{Conslusion}
 
