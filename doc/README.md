@@ -4,12 +4,8 @@ Install the [Nix package manager](https://nixos.org/nix/):
 curl https://nixos.org/nix/install | sh
 ```
 
-## Build
+## Build the PDF
 ```
-./build
+nix-build
 ```
-
-## Run
-```
-./target/bin/mastermind --help
-```
+`result` is now a symlink to the PDF file.

@@ -1,2 +1,3 @@
-#!/usr/bin/env bash
-nix-shell --run 'bash -c "$buildPhase"'
+#! /usr/bin/env nix-shell
+#! nix-shell --pure -i bash
+bash -c "$buildPhase"
